@@ -303,7 +303,7 @@ This property can contain the following values:
 | <dl> <dt>8</dt> </dl>           | Domain Name Server<br/> |
 | <dl> <dt>14</dt> </dl>          | Host Name<br/>          |
 | <dl> <dt>17</dt> </dl>          | Domain Name<br/>        |
-| <dl> <dt>18 32767</dt> </dl>    | DMTF Reserverd<br/>     |
+| <dl> <dt>18 32767</dt> </dl>    | DMTF Reserved<br/>     |
 | <dl> <dt>32768 65535</dt> </dl> | Vendor Reserved<br/>    |
 
 
@@ -1302,7 +1302,7 @@ Indicates whether to use the DNS suffix for the connection during DNS registrati
 
 
 
-|                                     |                                                                                             |
+| Requirement | Value |
 |-------------------------------------|---------------------------------------------------------------------------------------------|
 | Minimum supported client<br/> | Windows 8<br/>                                                                        |
 | Minimum supported server<br/> | Windows Server 2012<br/>                                                              |

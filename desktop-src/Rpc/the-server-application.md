@@ -26,24 +26,25 @@ The server application must also include the two memory management functions tha
 #include <ctype.h>
 #include "hello.h"
 #include <windows.h>
+#pragma comment(lib, "Rpcrt4.lib")
 
-void main()
+int main()
 {
     RPC_STATUS status;
-    unsigned char * pszProtocolSequence = "ncacn_np";
-    unsigned char * pszSecurity         = NULL; 
-    unsigned char * pszEndpoint         = "\\pipe\\hello";
+    unsigned short* pszProtocolSequence = (unsigned short*)L"ncacn_np";
+    unsigned short* pszSecurity         = NULL;
+    unsigned short* pszEndpoint         = (unsigned short*)L"\\pipe\\hello";
     unsigned int    cMinCalls = 1;
     unsigned int    fDontWait = FALSE;
  
-    status = RpcServerUseProtseqEp(pszProtocolSequence,
+    status = RpcServerUseProtseqEpW(pszProtocolSequence,
                                    RPC_C_LISTEN_MAX_CALLS_DEFAULT,
                                    pszEndpoint,
                                    pszSecurity); 
  
     if (status) exit(status);
  
-    status = RpcServerRegisterIf(hello_ServerIfHandle,  
+    status = RpcServerRegisterIf(hello_v1_0_s_ifspec,  
                                  NULL,   
                                  NULL); 
  
@@ -54,7 +55,12 @@ void main()
                              fDontWait);
  
     if (status) exit(status);
- }
+}
+
+void HelloProc(unsigned char * pszString)
+{
+    printf("%s\n", pszString);
+}
 
 /******************************************************/
 /*         MIDL allocate and free                     */
