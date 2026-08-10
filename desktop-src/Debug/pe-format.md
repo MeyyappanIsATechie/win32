@@ -3,7 +3,7 @@ description: This specification describes the structure of executable (image) fi
 ms.assetid: 3dbfbf7f-6662-45a4-99f1-e0e24c370dee
 title: PE Format
 ms.topic: reference
-ms.date: 02/20/2025
+ms.date: 07/14/2025
 ---
 
 # PE Format
@@ -127,6 +127,8 @@ The Machine field has one of the following values, which specify the CPU type. A
 | IMAGE\_FILE\_MACHINE\_AMD64 <br/>     | 0x8664 <br/> | x64 <br/>                                                                         |
 | IMAGE\_FILE\_MACHINE\_ARM <br/>       | 0x1c0 <br/>  | ARM little endian <br/>                                                           |
 | IMAGE\_FILE\_MACHINE\_ARM64 <br/>     | 0xaa64 <br/> | ARM64 little endian <br/>                                                         |
+| IMAGE\_FILE\_MACHINE\_ARM64EC <br/>     | 0xA641 <br/> | ABI that enables interoperability between native ARM64 and emulated x64 code. <br/>                                                         |
+| IMAGE\_FILE\_MACHINE\_ARM64X <br/>     | 0xA64E <br/> | Binary format that allows both native ARM64 and ARM64EC code to coexist in the same file.  <br/>                                                         |
 | IMAGE\_FILE\_MACHINE\_ARMNT <br/>     | 0x1c4 <br/>  | ARM Thumb-2 little endian <br/>                                                   |
 | IMAGE\_FILE\_MACHINE\_AXP64 <br/>     | 0x284 <br/>  | AXP 64 (Same as Alpha 64) <br/>                                                   |
 | IMAGE\_FILE\_MACHINE\_EBC <br/>       | 0xebc <br/>  | EFI byte code <br/>                                                               |
@@ -879,13 +881,13 @@ By convention, the names are treated as zero-terminated UTF-8 encoded strings.
 
 #### Section Number Values
 
-Normally, the Section Value field in a symbol table entry is a one-based index into the section table. However, this field is a signed integer and can take negative values. The following values, less than one, have special meanings.
+Normally, the SectionNumber field in a symbol table entry is a one-based index into the section table. However, this field is a signed integer and can take zero or negative values. Values less than one have the following special meanings.
 
 
 
 | Constant                          | Value          | Description                                                                                                                                                                                                                            |
 |-----------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| IMAGE\_SYM\_UNDEFINED <br/> | 0 <br/>  | The symbol record is not yet assigned a section. A value of zero indicates that a reference to an external symbol is defined elsewhere. A value of non-zero is a common symbol with a size that is specified by the value. <br/> |
+| IMAGE\_SYM\_UNDEFINED <br/> | 0 <br/>  | The symbol record is not yet assigned a section. A Value field with a value of zero indicates a reference to an external symbol, which is defined elsewhere. A Value field with a non-zero value indicates a common symbol, whose size is specified by the value. <br/> |
 | IMAGE\_SYM\_ABSOLUTE <br/>  | -1 <br/> | The symbol has an absolute (non-relocatable) value and is not an address. <br/>                                                                                                                                                  |
 | IMAGE\_SYM\_DEBUG <br/>     | -2 <br/> | The symbol provides general type or debugging information but does not correspond to a section. Microsoft tools use this setting along with .file records (storage class FILE). <br/>                                            |
 
@@ -1270,7 +1272,11 @@ The tables that are referenced in this data structure are organized and sorted j
 
 #### Attributes
 
-As yet, no attribute flags are defined. The linker sets this field to zero in the image. This field can be used to extend the record by indicating the presence of new fields, or it can be used to indicate behaviors to the delay or unload helper functions.
+The Windows SDK headers define bit 0 of this field. In `winnt.h`, the field is the **Attributes** member of `IMAGE_DELAYLOAD_DESCRIPTOR`, whose low bit is `RvaBased` (commented "Delay load version 2"). In `delayimp.h`, the field is `grAttrs` of `ImgDelayDescr`, and the bit is the `dlattrRva` flag (value `0x1`), commented "RVAs are used instead of pointers ... Having this set indicates a VC7.0 and above delay load descriptor."
+ 
+When `RvaBased` (`dlattrRva`) is set, the address fields of the delay-load directory table (Name, Module Handle, Delay Import Address Table, Delay Import Name Table, and the optional Bound Delay Import and Unload Delay Import tables) are relative virtual addresses (RVAs), as documented in the preceding table. This is the form emitted by Visual C++ 7.0 and later, and is the form produced by current toolchains.
+ 
+When the bit is clear, the descriptor is the earlier form in which those fields are virtual addresses (pointers) rather than RVAs. The remaining 31 bits of the field are reserved. Consumers should examine this bit to determine how to interpret the descriptor's address fields.
 
 #### Name
 
@@ -2232,7 +2238,7 @@ The elements in the offsets array must be arranged in ascending order. This fact
 
 ### Second Linker Member
 
-Like the first linker member, the second linker member has the name "/" (IMAGE_ARCHIVE_LINKER_MEMBER). Although both linker members provide a directory of symbols and archive members that contain them, the second linker member is used in preference to the first by all current linkers. The second linker member includes symbol names in lexical order, which enables faster searching by name.
+Like the first linker member, the second linker member has the name "/" (IMAGE_ARCHIVE_LINKER_MEMBER). Although both linker members provide a directory of symbols and archive members that contain them, the second linker member is used in preference to the first by all current linkers. The second linker member includes symbol names in lexical order, which enables faster searching by name. The second linker member stores numbers in little-endian unlike the first linker member.
 
 The second member has the following format. This information appears after the header:
 
